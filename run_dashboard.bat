@@ -1,8 +1,10 @@
 @echo off
 echo ============================================================
-echo   Menjalankan E-Commerce Big Data Analytics Dashboard
-echo   Streamlit Web Interface
+echo   PASAR.DATA — Custom E-Commerce Big Data Analytics
+echo   FastAPI + Apache ECharts Custom Web Interface
 echo ============================================================
 echo.
-streamlit run dashboard/app.py
+echo Membuka browser di http://localhost:8000 ...
+start "" http://localhost:8000
+python web/server.py
 pause

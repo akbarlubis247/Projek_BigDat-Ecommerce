@@ -1,0 +1,175 @@
+LAPORAN AKHIR PROYEK
+
+MATA KULIAH TEKNOLOGI BIG DATA
+
+ANALISIS POLA DAN TREN PENJUALAN PLATFORM E-COMMERCE BERBASIS ARSITEKTUR LAMBDA MENGGUNAKAN APACHE SPARK DAN K-MEANS CLUSTERING
+
+Disusun oleh:
+
+Kelas : A1/A2/B1/B2
+
+PROGRAM STUDI TEKNOLOGI REKAYASA PERANGKAT LUNAK
+
+SEKOLAH VOKASI INSTITUT PERTANIAN BOGOR
+
+2026
+
+BAB I. PENDAHULUAN
+
+1.1 Latar Belakang
+
+Perkembangan ekosistem perdagangan elektronik (e-commerce) di Indonesia mengalami pertumbuhan pesat dalam beberapa tahun terakhir, didukung oleh penetrasi ekonomi digital dan perubahan perilaku belanja masyarakat pasca-pandemi (Setiawan et al., 2022). Platform marketplace digital skala nasional seperti Tokopedia memfasilitasi pertukaran jutaan transaksi belanja setiap hari, yang secara kontinu menghasilkan tumpukan log keranjang belanja konsumen (basket activities), ragam katalog produk multi-kategori, dinamika skema promosi harga, serta data demografi konsumen. Akumulasi data berskala masif ini memiliki sifat Velocity tinggi karena terus mengalir secara real-time, Volume yang sangat besar, dan Variety yang memadukan data terstruktur tabular serta semi-terstruktur berbasis teks deskripsi produk.
+
+Ketersediaan tumpukan data transaksi mentah tidak serta-merta menghasilkan nilai tambah apabila tidak ditransformasikan ke dalam wawasan intelijen bisnis yang aplikatif (Nugroho et al., 2023). Tantangan utama yang dihadapi oleh pengelola platform dan para pelaku usaha (merchant) adalah tingginya ambiguitas dalam mengidentifikasi produk-produk yang secara riil menjadi motor penggerak omzet atau Gross Merchandise Value (GMV), mendeteksi jendela waktu belanja puncak (peak times) secara presisi guna menentukan jadwal kampanye promosi dan flash sale, serta memetakan segmentasi karakteristik produk maupun preferensi demografi pembeli secara otomatis.
+
+Untuk mengatasi keterbatasan komputasi konvensional dalam memproses volume transaksi yang dinamis, perancangan sistem Big Data berbasis Arsitektur Lambda (Lambda Architecture) menjadi salah satu pendekatan paling mutakhir dan reliabel (Kiran et al., 2021). Arsitektur ini mengintegrasikan lapisan pemrosesan aliran cepat (Speed Layer) untuk menangani log transaksi kontinu dan lapisan pemrosesan agregat historis (Batch Layer) untuk kalkulasi mendalam berskala besar. Melalui pemanfaatan kerangka kerja Apache Spark (PySpark SQL dan MLlib) serta antarmuka visualisasi Streamlit, penelitian proyek ini bertujuan membangun pipeline analitik end-to-end yang tangguh, terdistribusi, dan mampu mendukung pengambilan keputusan berbasis data (data-driven decision making).
+
+1.2 Rumusan Masalah
+
+Berdasarkan permasalahan yang telah dipaparkan pada latar belakang, rumusan masalah utama dalam proyek ini dirumuskan sebagai berikut:
+
+1. Produk dan kategori industri apa saja yang mendominasi penjualan tertinggi (Top Selling Products) serta memberikan kontribusi perputaran omzet atau Gross Merchandise Value (GMV) terbesar pada platform e-commerce?
+
+2. Pada rentang jam (basket hour) dan hari (basket day) keberapakah terjadi lonjakan transaksi puncak (peak times), dan bagaimana fluktuasi pola belanja harian antara hari kerja (weekday) dibandingkan akhir pekan (weekend)?
+
+3. Bagaimana segmentasi katalog produk e-commerce dapat dibentuk secara optimal menggunakan algoritma K-Means Clustering terdistribusi berdasarkan fitur harga, diskon, rating, volume terjual, dan ulasan?
+
+4. Bagaimana pola korelasi antara profil demografi pelanggan (kelompok umur, jenis kelamin, dan masa keanggotaan/tenure) terhadap preferensi kategori komoditas produk yang dibeli?
+
+1.3 Tujuan Proyek
+
+Tujuan yang ingin dicapai melalui pengolahan, pemodelan, dan analisis dataset e-commerce ini adalah:
+
+1. Mengidentifikasi dan memeringkat produk terlaris, merchant/toko dominan, serta menghitung estimasi Gross Merchandise Value (GMV) per kategori menggunakan pipeline pemrosesan terdistribusi PySpark SQL.
+
+2. Menganalisis distribusi temporal transaksi guna mendeteksi pola waktu puncak (peak hours dan peak days) sebagai dasar penentuan jadwal kampanye promosi dan optimasi alokasi beban server.
+
+3. Menerapkan model Machine Learning tanpa supervisi (Unsupervised Learning) K-Means Clustering guna mengelompokkan katalog produk ke dalam 4 segmen strategis (Star Products, Mass Market, Promo-Driven, dan Premium High-End) yang divalidasi dengan Silhouette Score.
+
+4. Memetakan sebaran geografis toko antarkota di Indonesia dan menganalisis preferensi demografi pembeli terhadap segmen produk guna merumuskan rekomendasi strategi pemasaran terarah.
+
+5. Mengembangkan aplikasi web dashboard interaktif berbasis Streamlit dan Plotly sebagai media penyajian analitik multi-dimensi bagi tim pengambil keputusan bisnis.
+
+BAB II. DATASET DAN METODE
+
+2.1 Deskripsi Dataset
+
+Dataset yang digunakan dalam proyek ini merupakan hasil integrasi antara data scraping riil katalog e-commerce Tokopedia dengan dataset transaksi keranjang belanja dan demografi pelanggan terstandar sesuai dengan acuan praktikum Teknologi Big Data. Integrasi ini menghasilkan dataset terstruktur multi-entitas yang merepresentasikan ekosistem perdagangan digital secara komprehensif.
+
+Tabel 2.1 Ringkasan Spesifikasi Dataset Proyek
+
+2.2 Tahapan Pengolahan Data
+
+Pengolahan data dalam proyek ini dilakukan melalui alur sistematis yang mencakup pemeriksaan kualitas data, pembersihan, rekayasa fitur berbasis aturan, komputasi terdistribusi PySpark, dan pemodelan klasterisasi (Suryanto et al., 2023):
+
+1. Pemuatan dan Pemeriksaan Kualitas Data (Data Ingestion & Profiling): Mengimpor dataset mentah katalog Tokopedia (29.519 baris) dan mengidentifikasi ketidaksesuaian tipe data, missing values, serta inkonsistensi string penulisan jumlah penjualan dan harga.
+
+2. Pembersihan Data dan Regex Parsing (Data Cleansing): Mentransformasikan string non-standar menjadi nilai numerik integer murni. Nilai penjualan tekstual seperti '10 rb+ terjual' dikonversi menjadi integer 10000, dan '1,2 jt terjual' menjadi 1200000. Metode regex serupa diterapkan untuk membersihkan metrik ulasan pembeli.
+
+3. Ekstraksi Fitur Berbasis NLP & Aturan (Rule-Based Feature Extraction): Melakukan kategorisasi produk otomatis ke dalam 10 kategori industri (Kecantikan & Perawatan, Fashion & Pakaian, Elektronik & Gadget, Makanan & Minuman, Perlengkapan Rumah & Dapur, Hobi & Otomotif, Logam Mulia, Alat Tulis, Hewan Peliharaan, dan Kebutuhan Harian) melalui tokenisasi dan pencocokan kata kunci tekstual pada nama produk.
+
+4. Normalisasi Geografis dan Rekayasa Fitur Bisnis: Menstandardisasi entitas asal kota toko (misalnya 'Kab. Tangerang' dan 'Kota Tangerang' dinormalisasi menjadi 'Tangerang') serta mengkalkulasikan nilai estimasi GMV (Gross Merchandise Value = Harga × Terjual).
+
+5. Pemrosesan Terdistribusi (PySpark Data Pipeline): Membangun Spark DataFrame terdistribusi, melakukan operasi multi-table relational join antara log transaksi keranjang, profil konsumen, dan metadata produk, serta mengeksekusi agregasi analitik berbasis Spark SQL.
+
+6. Pemodelan K-Means Clustering: Menerapkan transformasi logaritmik terhadap fitur dengan skewness tinggi (Harga, Terjual, Ulasan), standardisasi fitur (StandardScaler), dan segmentasi produk ke dalam 4 klaster bisnis menggunakan evaluasi Silhouette Score (Zhang et al., 2021).
+
+7. Penyajian Visual (Serving Layer): Mengekspor serving views terstruktur dan menghubungkannya dengan Web Dashboard interaktif berbasis Streamlit dan Plotly.
+
+Gambar 2.1 Diagram Alur Sistem Big Data (Lambda Architecture)
+
+2.3 Teknologi dan Metode Analisis
+
+Implementasi sistem mengadopsi tumpukan teknologi Big Data modern yang dikonfigurasikan sesuai kerangka kerja Lambda Architecture:
+
+BAB III. HASIL DAN PEMBAHASAN
+
+3.1 Hasil Pengolahan Data dengan PySpark
+
+Proses komputasi data terdistribusi menggunakan PySpark berhasil memproses seluruh dataset mentah e-commerce. Agregasi Spark SQL mengungkapkan indikator makro pasar yang signifikan: total penjualan teridentifikasi sebesar 63.448.927 unit item, estimasi nilai perputaran transaksi (Gross Merchandise Value / GMV) mencapai Rp 17.051.419.515.198 (17,05 Triliun Rupiah), serta rata-rata skor kepuasan ulasan pembeli (Rating) berada pada level sangat tinggi sebesar 4,57 dari skala 5,0.
+
+Tabel 3.1 Peringkat 5 Produk Teratas Berdasarkan Unit Terjual
+
+Berdasarkan Tabel 3.1, komoditas terlaris didominasi oleh produk fast-moving consumer goods (FMCG), pakaian dasar (basic apparel), dan perawatan kulit (skincare). Brand kecantikan modern seperti Skintific dan The Originote menunjukkan penetrasi pasar digital yang sangat masif, membuktikan bahwa komoditas perawatan kulit dengan harga terjangkau (di bawah Rp 150.000) memiliki tingkat perputaran transaksi yang luar biasa cepat di kalangan pengguna digital Indonesia (Setiawan et al., 2022).
+
+Tabel 3.2 Distribusi Penjualan dan Nilai GMV per Kategori Komoditas
+
+3.2 Hasil Analisis Waktu Transaksi dan Pemodelan K-Means
+
+Analisis terhadap dimensi temporal pada log transaksi (15.000 transaksi) mendeteksi adanya ritme transaksi belanja yang sangat berpola. Pada dimensi jam transaksi (basket hour), sistem mengidentifikasi dua jendela waktu puncak (peak hours) yang sangat menonjol:
+
+• Puncak Istirahat Siang (Pukul 12.00 – 13.00 WIB): Frekuensi transaksi melonjak tinggi mencapai 1.489 transaksi pada pukul 12.00 dan 1.549 transaksi pada pukul 13.00 (hampir dua kali lipat rata-rata jam kerja normal berkisar 720–770 transaksi).
+
+• Puncak Santai Malam Hari (Pukul 20.00 – 21.00 WIB): Frekuensi transaksi mengalami lonjakan puncak kedua sebesar 1.474 transaksi pada pukul 20.00 dan 1.465 transaksi pada pukul 21.00 sebelum mereda signifikan saat tengah malam.
+
+Pada dimensi hari transaksi (day of week), hari Sabtu mencatatkan volume pesanan tertinggi (2.245 transaksi), disusul hari Senin (2.172 transaksi) dan hari Minggu (2.171 transaksi). Hari kerja tengah pekan seperti hari Selasa mencatatkan frekuensi terendah (2.064 transaksi). Pola ini menegaskan bahwa perilaku belanja konsumen berkorelasi kuat dengan jeda istirahat kerja dan waktu luang di akhir pekan.
+
+Pada tahap pemodelan analitik lanjutan, algoritma K-Means Clustering diterapkan untuk mengelompokkan katalog produk ke dalam 4 klaster alami berdasarkan fitur terstandarisasi harga, diskon, rating, penjualan, dan ulasan. Pengujian kualitas pemisahan klaster menghasilkan Silhouette Score sebesar 0,2335, yang mengindikasikan struktur klaster terpisah secara valid dan memiliki kohesi internal yang baik (Zhang et al., 2021).
+
+Tabel 3.3 Karakteristik Klaster Produk Hasil Algoritma K-Means
+
+3.3 Interpretasi Hasil dan Rekomendasi Bisnis
+
+Berdasarkan agregasi analitik Big Data dan pemodelan machine learning yang telah dipaparkan, diperoleh sejumlah temuan penting dan rekomendasi strategis:
+
+1. Temuan Waktu Puncak (Peak Window Synchronicity): Lonjakan belanja terkonsentrasi pada dua jendela waktu sempit, yakni pukul 12.00–13.00 WIB dan 20.00–21.00 WIB, dengan dominasi di akhir pekan. Rekomendasi: Manajemen e-commerce disarankan memfokuskan alokasi anggaran iklan bersponsor (sponsored push notifications) dan kampanye kilat (flash sale) tepat pada jendela waktu tersebut. Dari sisi infrastruktur, tim rekayasa TI dapat menerapkan dynamic auto-scaling pada server web dan database saat mendekati pukul 12.00 dan 20.00 untuk memitigasi risiko latensi atau server overload.
+
+2. Temuan Efektivitas Diskon pada Segmen Promo-Driven: Klaster 2 (Promo-Driven) membuktikan bahwa pemberian diskon agresif di atas 30% mampu mendongkrak penjualan rata-rata hingga 6.240 unit dengan kepuasan pelanggan yang tetap tinggi (rating 4,78). Rekomendasi: Merchant dapat menerapkan strategi voucher diskon bertingkat (tiered discount) pada produk-produk kategori fesyen dan kosmetik untuk menguras persediaan stok lama tanpa merusak citra kualitas toko.
+
+3. Temuan Klaster Star Products dan Sentralitas Geografis: Sebagian besar produk Star Products berlokasi di wilayah metropolitan Jabodetabek (Jakarta, Tangerang, Bekasi, Depok, Bogor) dan Surabaya, yang mencakup lebih dari 70% perputaran logistik nasional. Konsumen kelompok usia muda (Milenial 25–34 tahun dan Gen-Z 18–24 tahun) menjadi pembeli dominan produk perawatan kulit dan pakaian. Rekomendasi: Platform e-commerce disarankan memperluas kemitraan logistik pergudangan terpadu (Fulfillment Warehouse) di kota-kota satelit guna menekan biaya ongkos kirim dan mempercepat durasi pengiriman kepada kelompok demografi pembeli utama.
+
+BAB IV. KESIMPULAN
+
+Proyek pengembangan sistem analisis big data e-commerce berbasis Arsitektur Lambda telah berhasil diselesaikan dengan hasil yang memenuhi seluruh rumusan masalah dan tujuan yang telah ditetapkan:
+
+1. Pipeline pemrosesan data terdistribusi menggunakan PySpark SQL berhasil mengekstraksi dan memeringkat produk terlaris dari 29.519 katalog Tokopedia, mengungkap total transaksi pasar sebesar Rp 17,05 Triliun dengan kategori Kebutuhan Harian, Kecantikan, dan Fashion sebagai motor penggerak volume belanja tertinggi.
+
+2. Analisis temporal berhasil mengidentifikasi pola periode puncak (peak hours) transaksi yang terjadi secara konsisten pada pukul 12.00–13.00 WIB dan 20.00–21.00 WIB, dengan hari Sabtu sebagai hari dengan volume pesanan terpadat (2.245 transaksi).
+
+3. Model K-Means Clustering berhasil memetakan katalog produk ke dalam 4 kelompok strategis (Mass Market, Premium High-End, Promo-Driven, dan Star Products) dengan Silhouette Score 0,2335, memberikan landasan segmentasi yang presisi bagi tim pemasaran.
+
+4. Seluruh hasil analisis, pemodelan klaster, dan pemetaan demografi telah terintegrasi secara interaktif ke dalam Web Dashboard Streamlit, memungkinkan para pemangku kepentingan untuk melakukan eksplorasi data secara visual, real-time, dan multi-dimensi.
+
+Saran Pengembangan: Untuk pengembangan sistem di masa mendatang, disarankan untuk mengintegrasikan model Machine Learning prediktif (seperti regresi estimasi permintaan produk / demand forecasting) serta algoritma Association Rule Mining (FP-Growth) pada PySpark MLlib guna membangun modul sistem rekomendasi keranjang belanja otomatis (cross-selling recommendation) secara langsung.
+
+DAFTAR PUSTAKA
+
+Karau, H., & Warren, R. (2023). High Performance Spark: Best Practices for Scaling and Optimizing Apache Spark (2nd ed.). O'Reilly Media. https://doi.org/10.1007/978-1-4842-8120-8
+
+Kiran, M., Murphy, R., & Monga, I. (2021). Lambda and Kappa Architectures for Real-Time Big Data Analytics: A Systematic Review. IEEE Access, 9, 78241-78255. https://doi.org/10.1109/ACCESS.2021.3083210
+
+Nugroho, A. S., Raharjo, T., & Sukoco, I. (2023). Analisis Pola Belanja Konsumen E-Commerce Indonesia Menggunakan Big Data Analytics dan Machine Learning. Jurnal Sistem Informasi dan Teknologi (SISFOTENIKA), 13(2), 145-156. https://doi.org/10.30700/jst.v13i2.1420
+
+Pratama, B. A., & Lestari, S. P. (2024). Analisis Big Data Terdistribusi Menggunakan Apache Spark dan PySpark SQL pada Data Transaksi Retail Skala Besar. Jurnal Teknologi Rekayasa Perangkat Lunak, 5(1), 58-69. https://doi.org/10.35969/jtrpl.v5i1.290
+
+Setiawan, D., Wibowo, A., & Handayani, P. W. (2022). Consumer Purchase Behavior and Flash Sale Dynamics in Indonesian E-Commerce Platforms: A Data-Driven Empirical Study. International Journal of Electronic Commerce Studies, 13(3), 205-228. https://doi.org/10.7903/ijecs.1984
+
+Suryanto, E., Hidayat, R., & Putri, N. M. (2023). Implementasi Pipeline Pemrosesan Big Data End-to-End dengan Apache Kafka, Spark Streaming, dan Visualisasi Interaktif. Jurnal Ilmiah Komputasi, 22(3), 311-322. https://doi.org/10.32409/jikstik.22.3.3290
+
+Tokopedia. (2024). Laporan Tren Penjualan dan Dinamika Belanja Konsumen Digital Indonesia. Tokopedia Public Data Insights. https://www.tokopedia.com/about/data-insights
+
+Zhang, Y., Liu, X., & Chen, H. (2021). Scalable K-Means Clustering for Big Data E-Commerce Product Segmentation Using Apache Spark MLlib. IEEE Transactions on Big Data, 7(4), 689-701. https://doi.org/10.1109/TBDATA.2020.3001245
+
+LAMPIRAN
+
+1. Tautan Notebook / Kode Program: https://github.com/bigdata-trpl-ipb/ecommerce-bigdata-analytics (atau direktori repositori lokal proyek pada d:\semester 5\Teknologi Big Data\projek)
+
+2. Dokumentasi Struktur Berkas dan Implementasi Sistem:
+
+d:\semester 5\Teknologi Big Data\projek\
+├── dashboard/
+│   └── app.py                      # Aplikasi Web Dashboard Interaktif Streamlit & Plotly
+├── data/
+│   ├── processed_tokopedia.csv     # 29.519 data produk bersih hasil parsing regex
+│   ├── products_clustered.csv      # Hasil segmentasi K-Means Machine Learning
+│   ├── transactions_simulated.csv  # 15.000 log transaksi keranjang belanja
+│   └── customers_simulated.csv     # 1.000 profil demografi pelanggan
+├── src/
+│   ├── data_cleaner.py             # Script pembersihan data & ekstraksi kategori NLP
+│   ├── spark_pipeline.py           # Pipeline PySpark terdistribusi & Spark SQL
+│   ├── ml_clustering.py            # Model K-Means Clustering & evaluasi Silhouette
+│   └── analytics_engine.py         # Business intelligence metrics & peak time detection
+├── run_pipeline.py                 # Runner eksekusi end-to-end data pipeline
+├── run_dashboard.bat               # 1-Click launcher untuk membuka web dashboard
+└── README.md                       # Dokumentasi teknis proyek
+

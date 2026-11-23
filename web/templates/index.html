@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analitik E-Commerce — Dashboard Big Data Tokopedia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="/static/vendor/echarts.min.js"></script>
+</head>
+<body>
+  <div id="top-loader" class="top-loader" aria-hidden="true"></div>
+  <div id="sidebar-backdrop" class="sidebar-backdrop hidden" aria-hidden="true"></div>
+
+  <div class="app-shell">
+    <!-- ================================================== -->
+    <!-- CALM LEFT NAVIGATION SIDEBAR                       -->
+    <!-- ================================================== -->
+    <aside id="sidebar" class="sidebar" aria-label="Menu Utama">
+      <div class="sidebar-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="2" width="9" height="9" rx="2" fill="currentColor"/>
+            <rect x="13" y="2" width="9" height="4.5" rx="1.2" fill="#C95B2B"/>
+            <rect x="13" y="8.5" width="9" height="13.5" rx="2" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="2" y="13" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">Analitik Pasar</div>
+          <div class="brand-sub">Big Data E-Commerce</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" role="tablist" aria-orientation="vertical">
+        <div class="nav-group-label">Analisis Data</div>
+
+        <button class="nav-item active" data-page="ringkasan" role="tab" aria-selected="true">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>
+          </svg>
+          <span class="nav-text">
+            <strong>Ringkasan Pasar</strong>
+            <small>Gambaran umum &amp; kategori</small>
+          </span>
+        </button>
+
+        <button class="nav-item" data-page="produk" role="tab" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          <span class="nav-text">
+            <strong>Produk &amp; Toko Terlaris</strong>
+            <small>Cari &amp; urutkan peringkat</small>
+          </span>
+        </button>
+
+        <button class="nav-item" data-page="waktu" role="tab" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>
+          </svg>
+          <span class="nav-text">
+            <strong>Waktu Belanja Puncak</strong>
+            <small>Jam &amp; hari paling ramai</small>
+          </span>
+        </button>
+
+        <button class="nav-item" data-page="geografi" role="tab" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span class="nav-text">
+            <strong>Sebaran Wilayah</strong>
+            <small>Kota penjualan terbesar</small>
+          </span>
+        </button>
+
+        <button class="nav-item" data-page="klaster" role="tab" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="7" cy="8" r="3"/><circle cx="17" cy="7" r="2.5"/><circle cx="15" cy="16" r="3.5"/><circle cx="6.5" cy="17" r="2"/>
+          </svg>
+          <span class="nav-text">
+            <strong>Segmentasi Produk (ML)</strong>
+            <small>Pengelompokan K-Means</small>
+          </span>
+        </button>
+
+        <div class="nav-group-label mt-nav">Data &amp; Sistem</div>
+
+        <button class="nav-item" data-page="unggah" role="tab" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span class="nav-text">
+            <strong>Unggah Data CSV</strong>
+            <small>Upload file &amp; Prompt AI</small>
+          </span>
+        </button>
+
+        <button class="nav-item" data-page="arsitektur" role="tab" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+          </svg>
+          <span class="nav-text">
+            <strong>Arsitektur Big Data</strong>
+            <small>Alur Lambda &amp; PySpark</small>
+          </span>
+        </button>
+      </nav>
+
+      <!-- Active Dataset Card at Bottom of Sidebar -->
+      <div class="sidebar-footer">
+        <div class="dataset-card">
+          <div class="dataset-card-head">
+            <span class="status-dot" id="sidebar-source-dot"></span>
+            <span class="dataset-card-kicker" id="sidebar-source-title">Data Bawaan Aktif</span>
+          </div>
+          <div class="dataset-card-sub" id="sidebar-source-sub">Memuat katalog...</div>
+          <button id="btn-sidebar-upload" class="btn-subtle full" type="button">Ganti / Unggah CSV</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ================================================== -->
+    <!-- MAIN CONTENT WORKSPACE                             -->
+    <!-- ================================================== -->
+    <div class="main-wrap">
+      <!-- Clean Page Header Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="btn-mobile-menu" class="mobile-menu-btn" aria-label="Buka menu navigasi">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <div>
+            <h1 id="page-title" class="page-title">Ringkasan Pasar</h1>
+            <p id="page-subtitle" class="page-subtitle">Gambaran performa penjualan, kategori paling laris, dan kelompok harga yang paling diminati.</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button id="active-dataset-chip" class="dataset-chip" type="button" title="Klik untuk mengganti dataset">
+            <span class="status-dot" id="top-source-dot"></span>
+            <span id="top-source-label">Katalog Tokopedia</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Contextual Filter Bar (Shown ONLY on pages where filters apply) -->
+      <section id="filter-bar" class="filter-bar" aria-label="Filter Data Produk">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label for="filter-category">Kategori</label>
+            <select id="filter-category" class="select-input">
+              <option value="ALL">Semua Kategori</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-city">Kota Penjual</label>
+            <select id="filter-city" class="select-input">
+              <option value="ALL">Semua Kota</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-price">Rentang Harga</label>
+            <select id="filter-price" class="select-input">
+              <option value="ALL">Semua Harga</option>
+              <option value="0-100000">Di bawah Rp 100 Ribu</option>
+              <option value="100000-500000">Rp 100 Ribu – Rp 500 Ribu</option>
+              <option value="500000-2000000">Rp 500 Ribu – Rp 2 Juta</option>
+              <option value="2000000-">Di atas Rp 2 Juta</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-rating">Minimal Rating</label>
+            <select id="filter-rating" class="select-input">
+              <option value="0">Semua Rating</option>
+              <option value="4.0">4,0 ke atas</option>
+              <option value="4.5">4,5 ke atas</option>
+              <option value="4.8">4,8 ke atas</option>
+              <option value="5.0">Khusus 5,0</option>
+            </select>
+          </div>
+
+          <div class="filter-status-area">
+            <span id="filter-status-text" class="filter-status-text">Menampilkan semua produk</span>
+            <button id="btn-reset-filters" class="btn-reset hidden" type="button">Hapus Filter</button>
+          </div>
+        </div>
+        <div id="active-filter-chips" class="chip-row hidden"></div>
+      </section>
+
+      <!-- Main Page Body -->
+      <main class="content">
+
+        <!-- ============================================ -->
+        <!-- PAGE 1: RINGKASAN PASAR                      -->
+        <!-- ============================================ -->
+        <section class="page-view active" id="page-ringkasan">
+          <div class="takeaway-box" id="ringkasan-takeaway">Memuat kesimpulan pasar...</div>
+
+          <div class="kpi-grid-4 mt-md">
+            <article class="kpi-card">
+              <div class="kpi-label">Total Produk</div>
+              <div class="kpi-value mono" id="kpi-products">—</div>
+              <div class="kpi-hint" id="kpi-products-sub">—</div>
+            </article>
+            <article class="kpi-card">
+              <div class="kpi-label">Total Unit Terjual</div>
+              <div class="kpi-value mono" id="kpi-volume">—</div>
+              <div class="kpi-hint" id="kpi-volume-sub">—</div>
+            </article>
+            <article class="kpi-card kpi-highlight">
+              <div class="kpi-label">Estimasi Omzet (GMV)</div>
+              <div class="kpi-value mono" id="kpi-gmv">—</div>
+              <div class="kpi-hint" id="kpi-gmv-sub">Harga × unit terjual</div>
+            </article>
+            <article class="kpi-card">
+              <div class="kpi-label">Rata-rata Rating</div>
+              <div class="kpi-value mono" id="kpi-rating">—</div>
+              <div class="kpi-hint" id="kpi-discount-sub">—</div>
+            </article>
+          </div>
+
+          <div class="grid-12 mt-md">
+            <div class="card col-7">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">Penjualan per Kategori Produk</h2>
+                  <p class="card-sub">Klik salah satu batang kategori untuk memfilter seluruh dashboard ke kategori tersebut</p>
+                </div>
+                <div class="seg-control" id="cat-metric-toggle">
+                  <button type="button" class="seg-btn active" data-metric="total_terjual">Unit Terjual</button>
+                  <button type="button" class="seg-btn" data-metric="total_gmv">Estimasi Omzet</button>
+                </div>
+              </div>
+              <div id="chart-category-bar" class="chart-box chart-lg"></div>
+            </div>
+
+            <div class="card col-5">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">Porsi Jumlah Produk</h2>
+                  <p class="card-sub">Persentase katalog barang yang tersedia di tiap kategori</p>
+                </div>
+              </div>
+              <div id="chart-category-donut" class="chart-box chart-lg"></div>
+            </div>
+          </div>
+
+          <div class="card mt-md">
+            <div class="card-head">
+              <div>
+                <h2 class="card-title">Kelompok Harga Paling Diminati Pembeli</h2>
+                <p class="card-sub">Batang hijau = jumlah unit laku · Garis terakota = total estimasi omzet (GMV)</p>
+              </div>
+            </div>
+            <div id="chart-price-tier" class="chart-box chart-md"></div>
+          </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!-- PAGE 2: PRODUK & TOKO TERLARIS               -->
+        <!-- ============================================ -->
+        <section class="page-view" id="page-produk">
+          <div class="card">
+            <div class="card-head card-head-wrap">
+              <div>
+                <h2 class="card-title">Daftar Produk Paling Unggul</h2>
+                <p class="card-sub" id="product-match-count">Gunakan kotak pencarian untuk mencari produk atau toko tertentu</p>
+              </div>
+              <div class="table-toolbar">
+                <div class="search-box">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  <input type="text" id="product-search" class="text-input" placeholder="Cari produk atau nama toko..." />
+                </div>
+                <select id="product-sort" class="select-input compact">
+                  <option value="terjual_clean">Urutkan: Paling Laris</option>
+                  <option value="estimasi_gmv">Urutkan: Omzet Tertinggi</option>
+                  <option value="Harga (IDR)">Urutkan: Harga Tertinggi</option>
+                  <option value="Rating">Urutkan: Rating Tertinggi</option>
+                </select>
+                <select id="product-limit" class="select-input compact">
+                  <option value="10">Tampilkan 10</option>
+                  <option value="15" selected>Tampilkan 15</option>
+                  <option value="25">Tampilkan 25</option>
+                  <option value="50">Tampilkan 50</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="chart-top-products" class="chart-box chart-md"></div>
+
+            <div class="table-wrap mt-sm">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th class="col-rank">#</th>
+                    <th>Produk &amp; Toko</th>
+                    <th>Kategori</th>
+                    <th>Kota</th>
+                    <th class="num">Harga</th>
+                    <th class="num">Diskon</th>
+                    <th class="num">Rating</th>
+                    <th class="num">Terjual</th>
+                    <th class="num">Estimasi Omzet</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-top-products"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card mt-md">
+            <div class="card-head">
+              <div>
+                <h2 class="card-title">10 Toko dengan Penjualan Tertinggi</h2>
+                <p class="card-sub">Diurutkan berdasarkan total akumulasi barang terjual di seluruh katalog toko</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th class="col-rank">#</th>
+                    <th>Nama Toko</th>
+                    <th>Kota</th>
+                    <th class="num">Jumlah Produk</th>
+                    <th class="num">Total Terjual</th>
+                    <th class="num">Estimasi Omzet</th>
+                    <th class="num">Rata-rata Rating</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-top-shops"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!-- PAGE 3: WAKTU BELANJA PUNCAK                 -->
+        <!-- ============================================ -->
+        <section class="page-view" id="page-waktu">
+          <div class="takeaway-box" id="waktu-takeaway">Memuat analisis pola waktu transaksi...</div>
+
+          <div class="kpi-grid-3 mt-md" id="waktu-kpis"></div>
+
+          <div class="card mt-md">
+            <div class="card-head">
+              <div>
+                <h2 class="card-title">Grafik Transaksi Harian</h2>
+                <p class="card-sub">Geser bilah bawah grafik untuk memperbesar periode tanggal tertentu</p>
+              </div>
+              <span class="mono-pill" id="tx-total-badge">— transaksi</span>
+            </div>
+            <div id="chart-daily-trend" class="chart-box chart-lg"></div>
+          </div>
+
+          <div class="grid-12 mt-md">
+            <div class="card col-6">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">Jam Belanja Paling Ramai</h2>
+                  <p class="card-sub">Batang berwarna terakota menandakan jam puncak belanja (Peak Hours)</p>
+                </div>
+              </div>
+              <div id="chart-hourly" class="chart-box chart-md"></div>
+            </div>
+
+            <div class="card col-6">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">Hari Belanja Paling Ramai</h2>
+                  <p class="card-sub">Perbandingan total barang dibeli dari Senin hingga Minggu</p>
+                </div>
+              </div>
+              <div id="chart-dow" class="chart-box chart-md"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!-- PAGE 4: SEBARAN WILAYAH                      -->
+        <!-- ============================================ -->
+        <section class="page-view" id="page-geografi">
+          <div class="takeaway-box" id="geo-takeaway">Memuat analisis wilayah...</div>
+
+          <div class="kpi-grid-3 mt-md" id="geo-kpis"></div>
+
+          <div class="grid-12 mt-md">
+            <div class="card col-7">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">15 Kota dengan Penjualan Terbesar</h2>
+                  <p class="card-sub">Klik salah satu kota untuk memfilter data khusus wilayah tersebut</p>
+                </div>
+                <div class="seg-control" id="geo-metric-toggle">
+                  <button type="button" class="seg-btn active" data-metric="total_terjual">Unit Terjual</button>
+                  <button type="button" class="seg-btn" data-metric="total_gmv">Estimasi Omzet</button>
+                </div>
+              </div>
+              <div id="chart-geo-bar" class="chart-box chart-xl"></div>
+            </div>
+
+            <div class="card col-5">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">Jumlah Produk vs Rating per Kota</h2>
+                  <p class="card-sub">Semakin besar lingkaran berarti semakin banyak barang terjual dari kota tersebut</p>
+                </div>
+              </div>
+              <div id="chart-geo-bubble" class="chart-box chart-xl"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!-- PAGE 5: SEGMENTASI PRODUK (K-MEANS ML)       -->
+        <!-- ============================================ -->
+        <section class="page-view" id="page-klaster">
+          <div class="takeaway-box" id="klaster-takeaway">Memuat hasil segmentasi K-Means...</div>
+
+          <div class="grid-12 mt-md">
+            <div class="card col-8">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">Peta Kelompok Produk (K-Means Clustering)</h2>
+                  <p class="card-sub">Cara membaca: tiap titik mewakili 1 produk — semakin ke kanan makin mahal, semakin ke atas makin laris</p>
+                </div>
+              </div>
+              <div id="chart-cluster-scatter" class="chart-box chart-lg"></div>
+            </div>
+
+            <div class="card col-4">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">Porsi Tiap Segmen</h2>
+                  <p class="card-sub">Persentase produk pada masing-masing kelompok</p>
+                </div>
+              </div>
+              <div id="chart-cluster-donut" class="chart-box chart-lg"></div>
+            </div>
+          </div>
+
+          <div class="card mt-md">
+            <div class="card-head">
+              <div>
+                <h2 class="card-title">Perbandingan Karakteristik Tiap Segmen</h2>
+                <p class="card-sub">Rata-rata harga, penjualan, rating, dan diskon yang membedakan setiap kelompok produk</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nama Segmen</th>
+                    <th class="num">Jumlah Produk</th>
+                    <th class="num">Porsi</th>
+                    <th class="num">Rata-rata Harga</th>
+                    <th class="num">Rata-rata Terjual</th>
+                    <th class="num">Rating</th>
+                    <th class="num">Diskon</th>
+                    <th class="num">Total Omzet</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-clusters"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="strategy-grid mt-md">
+            <article class="strategy-card s-emerald">
+              <div class="strategy-tag">Star Products</div>
+              <h3>Produk Andalan Utama</h3>
+              <p>Sangat laris dengan rating tinggi. Jaga ketersediaan stok dan tampilkan pada banner promo utama.</p>
+            </article>
+            <article class="strategy-card s-terracotta">
+              <div class="strategy-tag">Promo Driven</div>
+              <h3>Laris Saat Diskon</h3>
+              <p>Pembeli sangat responsif pada potongan harga. Cocok untuk paket bundling dan slot flash sale malam.</p>
+            </article>
+            <article class="strategy-card s-blue">
+              <div class="strategy-tag">Premium &amp; High-End</div>
+              <h3>Segmen Harga Tinggi</h3>
+              <p>Margin per barang besar. Dorong transaksi dengan garansi resmi, proteksi pengiriman, dan cicilan 0%.</p>
+            </article>
+            <article class="strategy-card s-slate">
+              <div class="strategy-tag">Mass Market</div>
+              <h3>Kebutuhan Harian Stabil</h3>
+              <p>Perputaran rutin dan stabil. Tingkatkan pembelian berulang lewat voucher gratis ongkir dan paket langganan.</p>
+            </article>
+          </div>
+
+          <div class="grid-12 mt-md">
+            <div class="card col-7">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">Demografi Pembeli Menurut Usia</h2>
+                  <p class="card-sub">Kelompok usia yang paling aktif berbelanja (Analisis Worksheet 3)</p>
+                </div>
+              </div>
+              <div id="chart-demo-age" class="chart-box chart-md"></div>
+            </div>
+            <div class="card col-5">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">Perbandingan Gender Pembeli</h2>
+                  <p class="card-sub">Proporsi total item yang dibeli oleh pelanggan laki-laki dan perempuan</p>
+                </div>
+              </div>
+              <div id="chart-demo-gender" class="chart-box chart-md"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!-- PAGE 6: UNGGAH DATA CSV & PROMPT AI          -->
+        <!-- ============================================ -->
+        <section class="page-view" id="page-unggah">
+          <div class="step-banner">
+            <div class="step-pill"><span class="step-num">1</span> Siapkan file CSV (atau buat lewat Prompt AI)</div>
+            <div class="step-arrow" aria-hidden="true">→</div>
+            <div class="step-pill"><span class="step-num">2</span> Unggah file ke kotak di bawah</div>
+            <div class="step-arrow" aria-hidden="true">→</div>
+            <div class="step-pill"><span class="step-num">3</span> Seluruh grafik otomatis diperbarui</div>
+          </div>
+
+          <div class="grid-12 mt-md">
+            <!-- Left: Upload Area -->
+            <div class="card col-6">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">Unggah Dataset CSV Baru</h2>
+                  <p class="card-sub">Sistem akan membersihkan data, mengelompokkan kategori, dan menghitung K-Means secara otomatis</p>
+                </div>
+              </div>
+
+              <div class="current-source-banner" id="upload-current-status">Memuat status data...</div>
+
+              <div id="dropzone" class="dropzone" tabindex="0">
+                <input type="file" id="csv-file-input" accept=".csv" hidden />
+                <div class="dropzone-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                </div>
+                <div class="dropzone-title">Klik untuk pilih file CSV, atau tarik file ke kotak ini</div>
+                <div class="dropzone-sub">Cukup pastikan ada kolom <strong>Nama Produk</strong> dan <strong>Harga (IDR)</strong></div>
+              </div>
+
+              <div id="upload-feedback" class="upload-feedback hidden"></div>
+
+              <div class="upload-action-bar">
+                <a href="/api/template" class="btn-outline" download>
+                  Unduh Contoh Template CSV (8 Produk)
+                </a>
+                <button id="btn-goto-ringkasan" class="btn-primary hidden" type="button">
+                  Lihat Hasil di Ringkasan Pasar →
+                </button>
+                <button id="btn-reset-dataset" class="btn-danger-outline hidden" type="button">
+                  Kembalikan ke Data Bawaan
+                </button>
+              </div>
+            </div>
+
+            <!-- Right: Live AI Prompt Builder -->
+            <div class="card col-6">
+              <div class="card-head">
+                <div>
+                  <h2 class="card-title">Generator Prompt AI untuk Buat Data Baru</h2>
+                  <p class="card-sub">Atur jumlah baris &amp; kategori, lalu salin ke ChatGPT, Gemini, atau Claude agar format CSV langsung cocok</p>
+                </div>
+              </div>
+
+              <div class="prompt-controls">
+                <div class="filter-group">
+                  <label for="prompt-rows">Jumlah Produk</label>
+                  <input type="number" id="prompt-rows" class="text-input" value="50" min="10" max="500" step="10" />
+                </div>
+                <div class="filter-group">
+                  <label for="prompt-cats">Kategori yang Diinginkan</label>
+                  <input type="text" id="prompt-cats" class="text-input" value="Elektronik, Fashion, Makanan & Minuman, Kecantikan" />
+                </div>
+              </div>
+
+              <pre class="code-block prompt-box" id="ai-prompt-output"></pre>
+
+              <button id="btn-copy-prompt" class="btn-primary full mt-sm" type="button">
+                Salin Prompt AI
+              </button>
+            </div>
+          </div>
+
+          <!-- Schema Reference Table -->
+          <div class="card mt-md">
+            <div class="card-head">
+              <div>
+                <h2 class="card-title">Panduan Nama Kolom File CSV</h2>
+                <p class="card-sub">Nama judul kolom di baris pertama file CSV sebaiknya mengikuti tabel di bawah — isi datanya bebas</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nama Kolom</th>
+                    <th>Status</th>
+                    <th>Format / Tipe</th>
+                    <th>Contoh Isi</th>
+                    <th>Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mono"><strong>Nama Produk</strong></td>
+                    <td><span class="tag-req">Wajib</span></td>
+                    <td>Teks</td>
+                    <td>Mouse Wireless Silent 2.4GHz</td>
+                    <td>Judul produk (dipakai otomatis menentukan kategori)</td>
+                  </tr>
+                  <tr>
+                    <td class="mono"><strong>Harga (IDR)</strong></td>
+                    <td><span class="tag-req">Wajib</span></td>
+                    <td>Angka bulat</td>
+                    <td class="mono">89000</td>
+                    <td>Harga Rupiah tanpa titik, koma, atau tulisan Rp</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">Nama Toko</td>
+                    <td><span class="tag-opt">Opsional</span></td>
+                    <td>Teks</td>
+                    <td>Tech Gadget Nusantara</td>
+                    <td>Nama toko / penjual</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">Lokasi Toko</td>
+                    <td><span class="tag-opt">Opsional</span></td>
+                    <td>Teks</td>
+                    <td>Jakarta Barat</td>
+                    <td>Kota lokasi penjual</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">Terjual</td>
+                    <td><span class="tag-opt">Opsional</span></td>
+                    <td>Teks / Angka</td>
+                    <td>1.2rb+ terjual / 850</td>
+                    <td>Jumlah unit laku (bisa angka polos atau format Tokopedia)</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">Jumlah Ulasan</td>
+                    <td><span class="tag-opt">Opsional</span></td>
+                    <td>Teks / Angka</td>
+                    <td>180 ulasan / 180</td>
+                    <td>Total ulasan pembeli</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">Rating</td>
+                    <td><span class="tag-opt">Opsional</span></td>
+                    <td>Desimal titik</td>
+                    <td class="mono">4.8</td>
+                    <td>Nilai rating antara 1.0 sampai 5.0</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">Diskon (%)</td>
+                    <td><span class="tag-opt">Opsional</span></td>
+                    <td>Angka</td>
+                    <td class="mono">15</td>
+                    <td>Persentase diskon (0 sampai 100)</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">Produk URL</td>
+                    <td><span class="tag-opt">Opsional</span></td>
+                    <td>Teks URL</td>
+                    <td>https://tokopedia.com/...</td>
+                    <td>Tautan halaman produk</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!-- PAGE 7: ARSITEKTUR BIG DATA                  -->
+        <!-- ============================================ -->
+        <section class="page-view" id="page-arsitektur">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2 class="card-title">Alur Arsitektur Lambda (Big Data Pipeline)</h2>
+                <p class="card-sub">Rancangan sistem sesuai Laporan Praktikum 2 &amp; Worksheet Praktikum 3 — Teknologi Big Data IPB University</p>
+              </div>
+            </div>
+
+            <div class="arch-flow">
+              <div class="arch-layer">
+                <div class="arch-layer-num">1 · Sumber Data</div>
+                <div class="arch-pair">
+                  <div class="arch-box box-terracotta">
+                    <strong>Data Streaming (Real-Time)</strong>
+                    <p><code>basket_details</code> — 15.000 log keranjang belanja untuk deteksi jam puncak transaksi.</p>
+                  </div>
+                  <div class="arch-box box-emerald">
+                    <strong>Data Batch (Katalog &amp; Pelanggan)</strong>
+                    <p>29.519 produk Tokopedia + 1.000 profil demografi pelanggan (<code>customer_details</code>).</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="arch-arrow" aria-hidden="true">↓</div>
+
+              <div class="arch-layer">
+                <div class="arch-layer-num">2 &amp; 3 · Penyerapan &amp; Penyimpanan</div>
+                <div class="arch-pair">
+                  <div class="arch-box box-blue">
+                    <strong>Apache Kafka</strong>
+                    <p>Menampung arus data transaksi agar server tetap stabil saat lonjakan flash sale.</p>
+                  </div>
+                  <div class="arch-box box-emerald">
+                    <strong>MongoDB (NoSQL)</strong>
+                    <p>Menyimpan data katalog semi-terstruktur secara fleksibel dan mudah diskalakan.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="arch-arrow" aria-hidden="true">↓</div>
+
+              <div class="arch-layer">
+                <div class="arch-layer-num">4 · Pemrosesan Terdistribusi (Apache Spark)</div>
+                <div class="arch-pair">
+                  <div class="arch-box box-terracotta">
+                    <strong>Speed Layer — Spark Streaming</strong>
+                    <p>Menghitung lonjakan pesanan harian dan jam sibuk secara cepat.</p>
+                  </div>
+                  <div class="arch-box box-blue">
+                    <strong>Batch Layer — PySpark SQL &amp; MLlib</strong>
+                    <p>Pembersihan teks, kategorisasi produk, agregasi GMV, dan K-Means Clustering.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="arch-arrow" aria-hidden="true">↓</div>
+
+              <div class="arch-layer">
+                <div class="arch-layer-num">5 · Penyajian Dashboard Web</div>
+                <div class="arch-box box-ink">
+                  <strong>FastAPI Backend + Custom Web UI (Apache ECharts)</strong>
+                  <p>Menyajikan grafik interaktif, pencarian cepat, dan fitur unggah dataset baru langsung di browser.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-md">
+            <div class="card-head">
+              <div>
+                <h2 class="card-title">Implementasi Kode PySpark MLlib</h2>
+                <p class="card-sub">Cuplikan kode clustering terdistribusi dari <code>src/ml_clustering.py</code></p>
+              </div>
+              <button id="btn-copy-spark" class="btn-outline" type="button">Salin Kode</button>
+            </div>
+            <pre class="code-block" id="spark-code-snippet"><code>from pyspark.sql import SparkSession
+from pyspark.ml.feature import VectorAssembler, StandardScaler
+from pyspark.ml.clustering import KMeans
+from pyspark.ml.evaluation import ClusteringEvaluator
+
+spark = SparkSession.builder \
+    .appName("EcommerceTokopediaClustering") \
+    .master("local[*]") \
+    .getOrCreate()
+
+df_spark = spark.read.csv("data/processed_tokopedia.csv", header=True, inferSchema=True)
+
+assembler = VectorAssembler(
+    inputCols=["Harga (IDR)", "Diskon (%)", "Rating", "terjual_clean", "ulasan_clean"],
+    outputCol="features_raw"
+)
+assembled = assembler.transform(df_spark)
+
+scaler = StandardScaler(
+    inputCol="features_raw", outputCol="features_scaled",
+    withStd=True, withMean=True
+)
+scaled_df = scaler.fit(assembled).transform(assembled)
+
+kmeans = KMeans(featuresCol="features_scaled", predictionCol="cluster", k=4, seed=42)
+predictions = kmeans.fit(scaled_df).transform(scaled_df)
+
+evaluator = ClusteringEvaluator(featuresCol="features_scaled", predictionCol="cluster")
+print(f"Silhouette Score: {evaluator.evaluate(predictions):.4f}")</code></pre>
+          </div>
+        </section>
+
+        <footer class="site-footer">
+          <div>Proyek Akhir Teknologi Big Data — Sekolah Vokasi IPB University</div>
+          <div class="mono">FastAPI · Pandas · Scikit-Learn · PySpark · Apache ECharts</div>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

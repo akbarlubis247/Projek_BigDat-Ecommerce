@@ -11,9 +11,12 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 from src.config import PROCESSED_DATA_PATH, CLUSTERS_DATA_PATH, TRANSACTIONS_DATA_PATH, CUSTOMERS_DATA_PATH
 from src.analytics_engine import EcommerceAnalytics
+from src.data_cleaner import parse_terjual, parse_ulasan, extract_category, normalize_location
 
 # Page configuration
 st.set_page_config(
@@ -74,12 +77,192 @@ def load_all_data():
     
     return df_prod, df_tx, df_cust
 
-df_prod_raw, df_tx, df_cust = load_all_data()
+def process_custom_dataset(uploaded_df):
+    """
+    Cleans, categorizes, and clusters any newly uploaded e-commerce CSV dataset on-the-fly.
+    """
+    df = uploaded_df.copy()
+    df.columns = [str(c).strip() for c in df.columns]
+    
+    # Auto-mapping alternative / bilingual column names
+    col_mapping = {
+        "Nama": "Nama Produk", "Product Name": "Nama Produk", "produk": "Nama Produk", "Produk": "Nama Produk",
+        "Toko": "Nama Toko", "Shop": "Nama Toko", "Merchant": "Nama Toko",
+        "Lokasi": "Lokasi Toko", "Kota": "Lokasi Toko", "Location": "Lokasi Toko", "City": "Lokasi Toko",
+        "Sold": "Terjual", "terjual": "Terjual", "Sales": "Terjual",
+        "Ulasan": "Jumlah Ulasan", "Review": "Jumlah Ulasan", "Reviews": "Jumlah Ulasan",
+        "Stars": "Rating", "Score": "Rating", "rating": "Rating",
+        "Harga": "Harga (IDR)", "Price": "Harga (IDR)", "harga": "Harga (IDR)", "Price (IDR)": "Harga (IDR)",
+        "Diskon": "Diskon (%)", "Discount": "Diskon (%)", "Discount (%)": "Diskon (%)",
+        "URL": "Produk URL", "Link": "Produk URL", "url": "Produk URL"
+    }
+    for old_col, new_col in col_mapping.items():
+        if old_col in df.columns and new_col not in df.columns:
+            df.rename(columns={old_col: new_col}, inplace=True)
+            
+    if "Nama Produk" not in df.columns:
+        raise ValueError("Kolom 'Nama Produk' wajib ada dalam file CSV.")
+        
+    if "Harga (IDR)" not in df.columns:
+        raise ValueError("Kolom 'Harga (IDR)' wajib ada dalam file CSV.")
+
+    if "product_id" not in df.columns:
+        df["product_id"] = [f"PROD_{i+1:05d}" for i in range(len(df))]
+    if "Nama Toko" not in df.columns:
+        df["Nama Toko"] = "Official / Toko Mitra"
+    if "Lokasi Toko" not in df.columns:
+        df["Lokasi Toko"] = "Jakarta"
+    if "Rating" not in df.columns:
+        df["Rating"] = 5.0
+    if "Diskon (%)" not in df.columns:
+        df["Diskon (%)"] = 0.0
+    if "Terjual" not in df.columns:
+        df["Terjual"] = 100
+    if "Jumlah Ulasan" not in df.columns:
+        df["Jumlah Ulasan"] = 10
+    if "Produk URL" not in df.columns:
+        df["Produk URL"] = "https://www.tokopedia.com"
+
+    # Fill NA and typecast
+    df["Nama Toko"] = df["Nama Toko"].fillna("Official / Toko Mitra")
+    df["Lokasi Toko"] = df["Lokasi Toko"].fillna("Jakarta")
+    df["Rating"] = pd.to_numeric(df["Rating"], errors="coerce").fillna(0.0)
+    df["Harga (IDR)"] = pd.to_numeric(df["Harga (IDR)"], errors="coerce").fillna(0).astype(int)
+    df["Diskon (%)"] = pd.to_numeric(df["Diskon (%)"], errors="coerce").fillna(0.0)
+
+    if "terjual_clean" not in df.columns:
+        df["terjual_clean"] = df["Terjual"].apply(parse_terjual)
+    if "ulasan_clean" not in df.columns:
+        df["ulasan_clean"] = df["Jumlah Ulasan"].apply(parse_ulasan)
+    if "kategori" not in df.columns:
+        df["kategori"] = df["Nama Produk"].apply(extract_category)
+    if "lokasi_clean" not in df.columns:
+        df["lokasi_clean"] = df["Lokasi Toko"].apply(normalize_location)
+    if "estimasi_gmv" not in df.columns:
+        df["estimasi_gmv"] = df["Harga (IDR)"] * df["terjual_clean"]
+        
+    def get_price_tier(price):
+        if price < 25000: return "< Rp 25 Ribu (Budget)"
+        elif price <= 100000: return "Rp 25k - 100k (Ekonomis)"
+        elif price <= 500000: return "Rp 100k - 500k (Menengah)"
+        elif price <= 2000000: return "Rp 500k - 2 Juta (Premium)"
+        else: return "> Rp 2 Juta (Luxury/Investasi)"
+        
+    if "price_tier" not in df.columns:
+        df["price_tier"] = df["Harga (IDR)"].apply(get_price_tier)
+        
+    # K-Means Clustering on-the-fly
+    if "cluster_label" not in df.columns or "cluster" not in df.columns:
+        k = min(4, max(1, len(df)))
+        if k == 1:
+            df["cluster"] = 0
+            df["cluster_label"] = "Mass Market & Regular (Produk Harian Standar)"
+        else:
+            df_cluster = df.copy()
+            df_cluster["log_harga"] = np.log1p(df_cluster["Harga (IDR)"])
+            df_cluster["log_terjual"] = np.log1p(df_cluster["terjual_clean"])
+            df_cluster["log_ulasan"] = np.log1p(df_cluster["ulasan_clean"])
+            
+            X = df_cluster[["log_harga", "Diskon (%)", "Rating", "log_terjual", "log_ulasan"]].values
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X)
+            
+            kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+            clusters = kmeans.fit_predict(X_scaled)
+            df["cluster"] = clusters
+            
+            cluster_means = df.groupby("cluster")[["Harga (IDR)", "terjual_clean", "Rating", "Diskon (%)", "ulasan_clean"]].mean()
+            labels = {}
+            for c in range(k):
+                m_terjual = cluster_means.loc[c, "terjual_clean"]
+                m_harga = cluster_means.loc[c, "Harga (IDR)"]
+                m_diskon = cluster_means.loc[c, "Diskon (%)"]
+                m_rating = cluster_means.loc[c, "Rating"]
+                
+                if m_terjual > cluster_means["terjual_clean"].median() * 1.5 and m_rating >= 4.5:
+                    labels[c] = "Star Products (Super Laris & Reputasi Tinggi)"
+                elif m_harga > cluster_means["Harga (IDR)"].median():
+                    labels[c] = "Premium & High-End (Segmen Menengah Ke Atas)"
+                elif m_diskon > cluster_means["Diskon (%)"].median():
+                    labels[c] = "Promo Driven (Laris Karena Diskon/Promo)"
+                else:
+                    labels[c] = "Mass Market & Regular (Produk Harian Standar)"
+                    
+            used_labels = set()
+            final_labels = {}
+            for c, lbl in labels.items():
+                if lbl not in used_labels:
+                    final_labels[c] = lbl
+                    used_labels.add(lbl)
+                else:
+                    final_labels[c] = f"Segmen Produk {c+1}"
+            df["cluster_label"] = df["cluster"].map(final_labels)
+            
+    return df
+
+def generate_synthetic_tx_in_memory(df_prod):
+    """
+    Generates accompanying transaction & customer demographics for custom uploaded datasets.
+    """
+    np.random.seed(42)
+    n_cust = min(500, max(50, len(df_prod) * 2))
+    n_tx = min(3000, max(200, len(df_prod) * 5))
+    
+    genders = ["Male", "Female"]
+    cust_df = pd.DataFrame({
+        "customer_id": [f"CUST_{i+1:04d}" for i in range(n_cust)],
+        "sex": np.random.choice(genders, size=n_cust, p=[0.48, 0.52]),
+        "customer_age": np.random.randint(18, 65, size=n_cust),
+        "tenure": np.random.randint(1, 60, size=n_cust)
+    })
+    
+    prod_pool = df_prod["product_id"].tolist()
+    sampled_cust = np.random.choice(cust_df["customer_id"], size=n_tx)
+    sampled_prod = np.random.choice(prod_pool, size=n_tx)
+    
+    start_date = pd.Timestamp("2026-01-01")
+    date_offsets = np.random.randint(0, 180, size=n_tx)
+    basket_dates = [start_date + pd.Timedelta(days=int(d)) for d in date_offsets]
+    hours_pool = [8, 9, 10, 11, 12, 12, 13, 13, 14, 15, 16, 17, 18, 19, 20, 20, 21, 21, 22, 23]
+    hours = np.random.choice(hours_pool, size=n_tx)
+    counts = np.random.choice([1, 2, 3, 4, 5], size=n_tx, p=[0.65, 0.20, 0.08, 0.04, 0.03])
+    
+    tx_df = pd.DataFrame({
+        "customer_id": sampled_cust,
+        "product_id": sampled_prod,
+        "basket_date": [d.strftime("%Y-%m-%d") for d in basket_dates],
+        "basket_hour": hours,
+        "day_of_week": [d.strftime("%A") for d in basket_dates],
+        "basket_count": counts
+    })
+    return tx_df, cust_df
 
 # ==========================================
-# SIDEBAR FILTERS
+# SIDEBAR DATA SOURCE & FILTERS
 # ==========================================
 st.sidebar.image("https://assets.tokopedia.net/assets-tokopedia-lite/v2/zeus/kratos/6643de53.svg", width=180)
+st.sidebar.markdown("### 📤 Upload Dataset Baru")
+uploaded_file = st.sidebar.file_uploader(
+    "Pilih file CSV:",
+    type=["csv"],
+    help="Upload file dataset e-commerce baru format CSV"
+)
+
+if uploaded_file is not None:
+    try:
+        raw_uploaded = pd.read_csv(uploaded_file)
+        df_prod_raw = process_custom_dataset(raw_uploaded)
+        df_tx, df_cust = generate_synthetic_tx_in_memory(df_prod_raw)
+        st.sidebar.success(f"✅ Data kustom aktif: **{len(df_prod_raw):,}** produk")
+    except Exception as e:
+        st.sidebar.error(f"⚠️ Gagal memproses file: {e}")
+        st.sidebar.info("Menggunakan dataset bawaan sebagai cadangan.")
+        df_prod_raw, df_tx, df_cust = load_all_data()
+else:
+    df_prod_raw, df_tx, df_cust = load_all_data()
+    st.sidebar.caption("🟢 Menggunakan data bawaan (29,519 produk)")
+
+st.sidebar.markdown("---")
 st.sidebar.title("🎛️ Filter Analisis")
 
 all_categories = ["Semua Kategori"] + sorted(df_prod_raw["kategori"].dropna().unique().tolist())
@@ -89,15 +272,18 @@ selected_category = st.sidebar.selectbox("Pilih Kategori Produk:", all_categorie
 top_cities = ["Semua Lokasi"] + df_prod_raw["lokasi_clean"].value_counts().head(15).index.tolist()
 selected_city = st.sidebar.selectbox("Pilih Wilayah / Kota:", top_cities)
 
-# Price range slider
-min_price = int(df_prod_raw["Harga (IDR)"].min())
-max_price = int(df_prod_raw["Harga (IDR)"].quantile(0.98)) # 98th percentile to avoid outlier extremes
+# Price range slider (defensive boundaries)
+min_price = int(df_prod_raw["Harga (IDR)"].min()) if len(df_prod_raw) > 0 else 0
+raw_max = int(df_prod_raw["Harga (IDR)"].quantile(0.98)) if len(df_prod_raw) > 0 else 1000000
+max_price = max(min_price + 1000, raw_max)
+price_step = max(1000, (max_price - min_price) // 50)
+
 price_range = st.sidebar.slider(
     "Rentang Harga (IDR):",
     min_value=min_price,
     max_value=max_price,
     value=(min_price, max_price),
-    step=10000,
+    step=price_step,
     format="Rp %d"
 )
 
@@ -129,6 +315,65 @@ st.sidebar.caption("Teknologi Big Data © 2026")
 # ==========================================
 st.markdown('<div class="main-title">E-Commerce Big Data Analytics Dashboard</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Analisis Pola dan Tren Penjualan E-Commerce Berdasarkan Data Transaksi dan Katalog Produk Tokopedia</div>', unsafe_allow_html=True)
+
+# Expander for Dataset Guide & AI Prompt
+with st.expander("📖 Panduan Format File & Template Prompt AI untuk Generate Dataset Baru", expanded=False):
+    tab_guide, tab_prompt = st.tabs(["📋 Format Kolom & Unduh Template", "🤖 Template Prompt AI (ChatGPT / Claude / Gemini)"])
+    
+    with tab_guide:
+        st.markdown("""
+        **Format Kolom File CSV yang Didukung:**  
+        Agar dashboard dan algoritma machine learning (K-Means) dapat berjalan sempurna, file CSV Anda sebaiknya memiliki 9 kolom berikut:
+        """)
+        
+        guide_data = pd.DataFrame([
+            {"Nama Kolom": "Nama Produk", "Status": "Wajib ⭐", "Tipe Data": "Teks", "Contoh Isi": "Mouse Wireless Silent Click 2.4GHz USB", "Keterangan": "Judul nama barang e-commerce"},
+            {"Nama Kolom": "Harga (IDR)", "Status": "Wajib ⭐", "Tipe Data": "Angka Bulat", "Contoh Isi": "89000", "Keterangan": "Harga satuan Rupiah (tanpa titik/Rp)"},
+            {"Nama Kolom": "Nama Toko", "Status": "Opsional", "Tipe Data": "Teks", "Contoh Isi": "Tech Gadget Nusantara", "Keterangan": "Nama toko/merchant penjual"},
+            {"Nama Kolom": "Lokasi Toko", "Status": "Opsional", "Tipe Data": "Teks", "Contoh Isi": "Jakarta Barat", "Keterangan": "Kota lokasi asal toko"},
+            {"Nama Kolom": "Terjual", "Status": "Opsional", "Tipe Data": "Teks / Angka", "Contoh Isi": "850 terjual / 1.2rb+ terjual", "Keterangan": "Kuantitas unit yang laku terjual"},
+            {"Nama Kolom": "Jumlah Ulasan", "Status": "Opsional", "Tipe Data": "Teks / Angka", "Contoh Isi": "180 ulasan / 180", "Keterangan": "Total ulasan pembeli"},
+            {"Nama Kolom": "Rating", "Status": "Opsional", "Tipe Data": "Desimal (Titik)", "Contoh Isi": "4.8", "Keterangan": "Rating ulasan (rentang 1.0 - 5.0)"},
+            {"Nama Kolom": "Diskon (%)", "Status": "Opsional", "Tipe Data": "Angka", "Contoh Isi": "15.0", "Keterangan": "Persentase diskon promo (0 - 100)"},
+            {"Nama Kolom": "Produk URL", "Status": "Opsional", "Tipe Data": "Teks URL", "Contoh Isi": "https://www.tokopedia.com/sample/item", "Keterangan": "Tautan halaman web produk"}
+        ])
+        st.dataframe(guide_data, use_container_width=True, hide_index=True)
+        
+        template_csv_path = PROJECT_ROOT / "data" / "template_dataset_ecommerce.csv"
+        if template_csv_path.exists():
+            with open(template_csv_path, "rb") as f:
+                st.download_button(
+                    label="📥 Unduh Contoh Template CSV (8 Produk Siap Pakai)",
+                    data=f,
+                    file_name="template_dataset_ecommerce.csv",
+                    mime="text/csv",
+                    help="Klik untuk mengunduh template CSV siap edit di Excel / Notepad"
+                )
+                
+    with tab_prompt:
+        st.markdown("""
+        **Gunakan Prompt AI Berikut:**  
+        Salin prompt di bawah ini dan tempelkan ke **ChatGPT**, **Claude**, atau **Gemini** untuk menghasilkan dataset baru yang 100% cocok dengan dashboard ini:
+        """)
+        
+        ai_prompt_text = '''Tolong buatkan dataset e-commerce dalam format CSV dengan header kolom PERSIS seperti berikut:
+Nama Produk,Nama Toko,Lokasi Toko,Terjual,Jumlah Ulasan,Rating,Harga (IDR),Diskon (%),Produk URL
+
+Ketentuan pembuatan data:
+1. Buatkan sebanyak [TENTUKAN JUMLAH, contoh: 50] baris data barang e-commerce Indonesia.
+2. Variasikan kategori produk: [contoh: Elektronik, Fashion, Makanan, Hewan Peliharaan, Rumah Tangga, Kecantikan].
+3. Format kolom:
+   - 'Nama Produk': Judul nama barang realistis.
+   - 'Nama Toko': Nama merchant / toko penjual.
+   - 'Lokasi Toko': Nama kota di Indonesia (misal: Jakarta Selatan, Bandung, Surabaya, Semarang, Medan).
+   - 'Terjual': Format teks angka penjualan (contoh: '1.5rb+ terjual', '850 terjual', atau '50 terjual').
+   - 'Jumlah Ulasan': Format ulasan (contoh: '250 ulasan' atau '15 ulasan').
+   - 'Rating': Angka desimal titik antara 3.5 sampai 5.0 (contoh: 4.8).
+   - 'Harga (IDR)': Angka bulat harga tanpa titik atau Rp (contoh: 85000).
+   - 'Diskon (%)': Angka persentase diskon 0 sampai 50 (contoh: 15.0).
+   - 'Produk URL': Link dummy (contoh: https://www.tokopedia.com/toko/produk-item).
+4. PENTING: Tampilkan HANYA blok kode teks CSV mentah (raw CSV code block), tanpa penjelasan pengantar atau penutup, agar langsung bisa di-copy dan disimpan sebagai file .csv.'''
+        st.code(ai_prompt_text, language="markdown")
 
 # Analytics Engine Instance
 analytics = EcommerceAnalytics(products_df=df_filtered, transactions_df=df_tx, customers_df=df_cust)
